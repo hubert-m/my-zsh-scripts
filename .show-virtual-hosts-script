@@ -1,0 +1,10 @@
+show-virtual-hosts() {
+  echo -e "\n📋 Lista virtualhostów NGINX:\n"
+  for file in /etc/nginx/sites-available/*; do
+    [ -f "$file" ] || continue
+    HOST=$(basename "$file")
+    ROOT=$(grep -Po 'root\s+\K[^;]+' "$file" | head -n 1)
+    printf "🌐 %-30s → %s\n" "$HOST" "$ROOT"
+  done
+  echo
+}

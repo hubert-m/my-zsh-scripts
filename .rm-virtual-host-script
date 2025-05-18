@@ -1,0 +1,46 @@
+rm-virtual-host() {
+  HOST="$1"
+
+  if [ -z "$HOST" ]; then
+    echo "❌ Użycie: rm-virtual-host [host]"
+    return 1
+  fi
+
+  SITE_AVAILABLE="/etc/nginx/sites-available/$HOST"
+  SITE_ENABLED="/etc/nginx/sites-enabled/$HOST"
+  LOG_DIR="/var/log/nginx/$HOST"
+
+  if [ ! -f "$SITE_AVAILABLE" ]; then
+    echo "❌ Virtualhost '$HOST' nie istnieje w sites-available."
+    return 1
+  fi
+
+  echo "⚠️  Uwaga: to usunie konfigurację i logi virtualhosta: $HOST"
+  read "confirm?Czy na pewno? (Y/n): "
+  if [[ "$confirm" != "Y" ]]; then
+    echo "❌ Anulowano."
+    return 1
+  fi
+
+  echo "🗑️  Usuwam virtualhost '$HOST'"
+
+  echo "🗑️  Usuwam plik $SITE_AVAILABLE"
+  sudo rm -f "$SITE_AVAILABLE"
+
+  echo "🗑️  Usuwam plik $SITE_ENABLED"
+  sudo rm -f "$SITE_ENABLED"
+
+  echo "🗑️  Usuwam katalog $LOG_DIR"
+  sudo rm -rf "$LOG_DIR"
+
+  # Usuń wpis z /etc/hosts (opcjonalnie)
+  if grep -q "$HOST" /etc/hosts; then
+    echo "🧹 Usuwam wpis z /etc/hosts"
+    sudo sed -i "/[[:space:]]$HOST$/d" /etc/hosts
+  fi
+
+  echo "🔄 Przeładowuję NGINX..."
+  sudo systemctl reload nginx
+
+  echo "✅ Virtualhost '$HOST' został usunięty."
+}

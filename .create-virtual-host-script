@@ -1,0 +1,72 @@
+create-virtual-host() {
+  ROOT_DIR=$(pwd)
+  HOST="$1"
+
+  if [ -z "$HOST" ]; then
+    echo "❌ Użycie: create-virtual-host [host]"
+    echo "Musisz znajdować się w katalogu, na który ma wskazywać host"
+    echo "Aktualna ścieżka to: $ROOT_DIR"
+    return 1
+  fi
+
+  SITE_AVAILABLE="/etc/nginx/sites-available/$HOST"
+  SITE_ENABLED="/etc/nginx/sites-enabled/$HOST"
+  LOG_DIR="/var/log/nginx/$HOST"
+
+  if [ -f "$SITE_AVAILABLE" ] || [ -L "$SITE_ENABLED" ]; then
+    echo "❌ Virtualhost '$HOST' już istnieje (plik lub symlink)"
+    return 1
+  fi
+
+  echo "➕ Tworzę katalog na logi"
+  echo "-- katalog: $LOG_DIR"
+  sudo mkdir -p "$LOG_DIR"
+
+  echo "➕ Tworzę virtualhost dla $HOST"
+  echo "-- plik: $SITE_AVAILABLE"
+  echo "-- dla katalogu: $ROOT_DIR"
+
+  sudo tee "$SITE_AVAILABLE" > /dev/null <<EOF
+server {
+    listen 80;
+    server_name $HOST;
+
+    root $ROOT_DIR;
+    index index.php index.html index.htm;
+
+    access_log $LOG_DIR/access.log;
+    error_log $LOG_DIR/error.log;
+
+    client_max_body_size 512M;
+
+    location / {
+        try_files \$uri \$uri/ /index.php?\$args;
+    }
+
+    location ~ \.php\$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}
+EOF
+
+  echo "➕ Tworzę link"
+  echo "-- źródło: $SITE_AVAILABLE"
+  echo "-- skrót: $SITE_ENABLED"
+  sudo ln -s "$SITE_AVAILABLE" "$SITE_ENABLED"
+
+  echo "➕ Dodaję wpis do /etc/hosts"
+  echo "-- wpis: 127.0.0.1 $HOST"
+  if ! grep -q "$HOST" /etc/hosts; then
+    echo "127.0.0.1 $HOST" | sudo tee -a /etc/hosts > /dev/null
+  fi
+
+  echo "🔄 Przeładowuję NGINX..."
+  sudo systemctl reload nginx
+
+  echo "✅ Virtualhost $HOST utworzony i aktywny!"
+}
