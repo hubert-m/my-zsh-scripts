@@ -6,5 +6,7 @@ show-virtual-hosts() {
     ROOT=$(grep -Po 'root\s+\K[^;]+' "$file" | head -n 1)
     printf "🌐 %-30s → %s\n" "$HOST" "$ROOT"
   done
-  echo
+  echo "\n🗑️  Możesz usunąć virtualhost poleceniem 'rm-virtual-host [host]'"
+  echo "✅  lub utworzyć nowy poleceniem 'create-virtual-host [host]'"
+  echo ""
 }
