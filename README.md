@@ -25,3 +25,7 @@ Lorem ipsum ...
 ## `rm-virtual-host [host]`
 
 Lorem ipsum ...
+
+## `vphp [version]`
+
+For example: `vphp 8.3` , `vphp 7.4`
