@@ -1,0 +1,3 @@
+source ~/.my-zsh-scripts/.create-virtual-host-script
+source ~/.my-zsh-scripts/.show-virtual-hosts-script
+source ~/.my-zsh-scripts/.rm-virtual-host-script
