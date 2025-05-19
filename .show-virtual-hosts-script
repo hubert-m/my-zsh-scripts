@@ -1,12 +1,27 @@
 show-virtual-hosts() {
-  echo -e "\n📋 Lista virtualhostów NGINX:\n"
-  for file in /etc/nginx/sites-available/*; do
+  SITES_AVAILABLE="/etc/nginx/sites-available"
+  FILES=($SITES_AVAILABLE/*)
+
+  echo -e "\n📋 Lista virtualhostów NGINX:"
+  echo "🗂️  $SITES_AVAILABLE/\n"
+
+  for file in $FILES; do
     [ -f "$file" ] || continue
+
     HOST=$(basename "$file")
     ROOT=$(grep -Po 'root\s+\K[^;]+' "$file" | head -n 1)
-    printf "🌐 %-30s → %s\n" "$HOST" "$ROOT"
+
+    if [ "$HOST" = "default" ]; then
+      HOST="localhost"
+    fi
+
+    HTTP_LINK="http://$HOST"
+    printf "🌐 %-30s → 📁 \e[1;36m%s\e[0m\n" "$HTTP_LINK" "$ROOT"
+
+    # Jeżeli to nie ostatni plik, rysuj linię
+    [ "$file" != "${FILES[-1]}" ] && printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' '-'
   done
-  echo "\n🗑️  Możesz usunąć virtualhost poleceniem 'rm-virtual-host [host]'"
-  echo "✅  lub utworzyć nowy poleceniem 'create-virtual-host [host]'"
-  echo ""
+
+  printf "\n🗑️   \e[1mrm-virtual-host [host]\e[0m"
+  printf "\n✅  \e[1mcreate-virtual-host [host]\e[0m\n"
 }
